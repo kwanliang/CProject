@@ -104,7 +104,6 @@ int chatbot_main(int inc, char *inv[], char *response, int n) {
 		snprintf(response, n, "I don't understand \"%s\".", inv[0]);
 		return 0;
 	}
-
 }
 
 
@@ -155,9 +154,7 @@ int chatbot_do_exit(int inc, char *inv[], char *response, int n) {
  */
 int chatbot_is_load(const char *intent) {
 	
-	/* to be implemented */
-	
-	return 0;
+	return compare_token(intent, "load") == 0;
 	
 }
 
@@ -192,9 +189,7 @@ int chatbot_do_load(int inc, char *inv[], char *response, int n) {
  */
 int chatbot_is_question(const char *intent) {
 	
-	/* to be implemented */
-	
-	return 0;
+	return compare_token(intent, "what") == 0 || compare_token(intent, "where") == 0 || compare_token(intent, "who") == 0;
 	
 }
 
@@ -215,9 +210,16 @@ int chatbot_is_question(const char *intent) {
 int chatbot_do_question(int inc, char *inv[], char *response, int n) {
 	
 	/* to be implemented */
-	 
+
+	// get and set knowledge cache
+	if (knowledge_get(inv[0], inv[1], response, n) == 0) {
+		snprintf(response, n, "FOUND SOMETHING");
+	}
+	else {
+		//prompt_user
+	}
+	snprintf(response, n, "FAILED TO FIND ANYTHING");
 	return 0;
-	 
 }
 
 
@@ -233,9 +235,7 @@ int chatbot_do_question(int inc, char *inv[], char *response, int n) {
  */
 int chatbot_is_reset(const char *intent) {
 	
-	/* to be implemented */
-	
-	return 0;
+	return compare_token(intent, "reset") == 0;
 	
 }
 
@@ -251,8 +251,8 @@ int chatbot_is_reset(const char *intent) {
  */
 int chatbot_do_reset(int inc, char *inv[], char *response, int n) {
 	
-	/* to be implemented */
-	 
+	knowledge_reset();
+	snprintf(response, n, "SUCCESSFULLY RESET");
 	return 0;
 	 
 }
@@ -265,14 +265,12 @@ int chatbot_do_reset(int inc, char *inv[], char *response, int n) {
  *  intent - the intent
  *
  * Returns:
- *  1, if the intent is "what", "where", or "who"
+ *  1, if the intent is "save"
  *  0, otherwise
  */
 int chatbot_is_save(const char *intent) {
 	
-	/* to be implemented */
-	
-	return 0;
+	return compare_token(intent, "save") == 0;
 	
 }
 

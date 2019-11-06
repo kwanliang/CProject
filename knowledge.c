@@ -32,8 +32,16 @@
  *   KB_INVALID, if 'intent' is not a recognised question word
  */
 int knowledge_get(const char *intent, const char *entity, char *response, int n) {
-	
-	/* to be implemented */
+
+	for (int i = 0; i < CacheCounter; ++i) {
+		if (compare_token(knowledgeCache[i].intent, intent) != 0)
+			continue;
+		if (compare_token(knowledgeCache[i].entity, entity) != 0)
+			continue;
+
+		response = knowledgeCache[i].response;
+		return KB_OK;
+	}
 	
 	return KB_NOTFOUND;
 	
@@ -51,15 +59,20 @@ int knowledge_get(const char *intent, const char *entity, char *response, int n)
  *   response  - the response for this question and entity
  *
  * Returns:
- *   KB_FOUND, if successful
+ *   KB_OK, if successful
  *   KB_NOMEM, if there was a memory allocation failure
  *   KB_INVALID, if the intent is not a valid question word
  */
 int knowledge_put(const char *intent, const char *entity, const char *response) {
-	
-	/* to be implemented */
-	
-	return KB_INVALID;
+
+	if (CacheCounter > MAX_CACHE)
+		return KB_NOMEM;
+
+	struct Knowledge temp = { .intent = intent, .entity = entity, .response = response};
+	knowledgeCache[CacheCounter] = temp;
+	CacheCounter++;
+
+	return KB_OK;
 	
 }
 
@@ -85,7 +98,7 @@ int knowledge_read(FILE *f) {
  */
 void knowledge_reset() {
 	
-	/* to be implemented */
+	memset(knowledgeCache, 0, sizeof(knowledgeCache));
 	
 }
 

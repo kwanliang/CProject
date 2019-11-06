@@ -22,12 +22,25 @@
 /* the maximum number of characters allowed in a response (including the terminating null) */
 #define MAX_RESPONSE 256
 
+/* the maximum number of Knowledge allowed in a cache */
+#define MAX_CACHE 256
+
 /* return codes for knowledge_get() and knowledge_put() */
 #define KB_OK        0
 #define KB_NOTFOUND -1
 #define KB_INVALID  -2
 #define KB_NOMEM    -3
- 
+
+/* for caching of response */
+struct Knowledge {
+	char* intent;
+	char* entity;
+	char* response;
+};
+struct Knowledge knowledgeCache[MAX_CACHE];
+
+int CacheCounter;
+
 /* functions defined in main.c */
 int compare_token(const char *token1, const char *token2);
 void prompt_user(char *buf, int n, const char *format, ...);
