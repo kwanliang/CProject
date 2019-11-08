@@ -42,6 +42,7 @@
  
 #include <stdio.h>
 #include <string.h>
+#include <stdlib.h>
 #include "chat1002.h"
  
  
@@ -287,7 +288,7 @@ int chatbot_is_save(const char *intent) {
 int chatbot_do_save(int inc, char *inv[], char *response, int n) {
 	
 	/* to be implemented */
-	
+
 	return 0;
 	 
 }
@@ -330,4 +331,95 @@ int chatbot_do_smalltalk(int inc, char *inv[], char *response, int n) {
 	return 0;
 	
 }
-  
+
+
+/*
+ * Extracts the entity from the user's input.
+ * 
+ * If the second word may be a part of speech that makes sense for the intent.
+ *    - for WHAT, WHERE and WHO, it may be "is" or "are".
+ *    - for SAVE, it may be "as" or "to".
+ *    - for LOAD, it may be "from".
+ * The word is otherwise ignored and may be omitted.
+ * 
+ * Input:
+ * 	inc - word count in input
+ * 	inv - array of pointers to each word from user's input
+ * 
+ * Returns:
+ * 	A pointer to a char containing the entity
+ * 	If the intent is a question,
+ * 		entity will contain all words after the intent or the second word
+ * 	If the intent is SAVE | LOAD,
+ * 		entity will contain the first word after the intent or the second word
+ * 	
+ * 
+ * E.g. "what is this thing" 	-->	this thing
+ * 		"save as that" 			-->	that
+ * 		"save as that thing"	--> that
+ */
+char *get_entity(int inc, char *inv[])
+{
+	// Number of words between start of entity and start of input
+	int offset = 1;
+	char *intent = inv[0];
+	char *entity = malloc(MAX_ENTITY);
+	memset(entity, '\0', sizeof(entity));
+
+	// Intent is WHAT | WHERE | WHO
+	if (chatbot_is_question(intent))
+	{
+		// If second word in input is IS | ARE
+		if (strcmp(inv[1], "is") == 0 || strcmp(inv[1], "are") == 0)
+		{
+			++offset;
+		}
+		strjoin(entity, " ", inv, inc, offset);
+	}
+
+	// Intent is SAVE
+	else if (chatbot_is_save(intent))
+	{
+		// If second word in input is AS | TO
+		snprintf(entity, MAX_ENTITY, "%s", inv[1]);
+		if (strcmp(inv[1], "as") == 0 || strcmp(inv[1], "to") == 0)
+			snprintf(entity, MAX_ENTITY, "%s", inv[2]);
+	}
+
+	// Intent is LOAD
+	else if (chatbot_is_load(intent))
+	{
+		// If second word in input is FROM
+		snprintf(entity, MAX_ENTITY, "%s", inv[1]);
+		if (strcmp(inv[1], "from") == 0)
+			snprintf(entity, MAX_ENTITY, "%s", inv[2]);
+	}
+
+	return entity;
+}
+
+/*
+ * Helper function for get_entity()
+ * Implementation of Python's join() function
+ * 
+ * Input
+ *  dest: receiver of the joined string
+ *  joiner: containes the string to be inserted between each input string
+ *  strings: array of strings to be joined
+ *  numberOfStrings: array size of strings
+ * 	offset: number of words between start of entity and start of input
+ */
+void strjoin(char *dest, const char *joiner, char *strings[], int numberOfStrings, int offset)
+{
+    // Max length of resultant string
+    // including the terminating null char
+    // Initialised to the first string
+    char buffer[MAX_ENTITY];
+    strcpy(buffer, strings[offset]);
+    for (int i = offset + 1; i < numberOfStrings; ++i)
+    {
+        strcat(buffer, joiner);
+        strcat(buffer, strings[i]);
+    }
+    snprintf(dest, MAX_ENTITY, "%s", buffer);
+}
