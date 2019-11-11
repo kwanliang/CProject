@@ -85,9 +85,49 @@ int knowledge_put(const char *intent, const char *entity, const char *response) 
  *
  * Returns: the number of entity/response pairs successful read from the file
  */
-int knowledge_read(FILE *f) {
-	
-	/* to be implemented */
+int knowledge_read(FILE *fp) {
+	FILE* fp = fopen("sample.ini", "r"); //opens sample.ini located at this file's location
+	if (fp == NULL) {
+		perror("Unable to open file!");
+		exit(1);
+	}
+
+	char chunk[128];
+
+	size_t len = sizeof(chunk);
+	char* line = malloc(len);
+	if (line == NULL) {
+		perror("Unable to allocate memory for the line buffer.");
+		exit(1);
+	}
+
+	line[0] = '\0';
+
+	while (fgets(chunk, sizeof(chunk), fp) != NULL) {
+		size_t len_used = strlen(line);
+		size_t chunk_used = strlen(chunk);
+
+		if (len - len_used < chunk_used) {
+			len *= 2;
+			if ((line = realloc(line, len)) == NULL) {
+				perror("Unable to reallocate memory for the line buffer.");
+				free(line);
+				exit(1);
+			}
+		}
+
+		strncpy(line + len_used, chunk, len - len_used);
+		len_used += chunk_used;
+
+		if (line[len_used - 1] == '\n') {
+			fputs(line, stdout);
+			fputs("|*\n", stdout);
+			line[0] = '\0';
+		}
+	}
+
+	fclose(fp);
+	free(line);
 	
 	return 0;
 }
@@ -111,6 +151,18 @@ void knowledge_reset() {
  */
 void knowledge_write(FILE *f) {
 	
-	/* to be implemented */
+	char sentence[1000]; //variable for testing purposes
+	FILE* fptr;
+
+	fptr = fopen("sample.txt", "w"); //creates a sample.txt at this file's location
+	if (fptr == NULL) {
+		printf("Error!");
+		exit(1);
+	}
+
+	fgets(sentence, 1000, stdin); //user's input for the knowledge 
+	fprintf(fptr, "%s", sentence); //writes input into sample.txt
+	fclose(fptr); //closes and saves the file
+
 	
 }
