@@ -9,6 +9,7 @@
 #define _CHAT1002_H
 
 #include <stdio.h>
+#include "knowledge.h"
 
 /* the maximum number of characters we expect in a line of input (including the terminating null)  */
 #define MAX_INPUT    256
@@ -21,25 +22,6 @@
 
 /* the maximum number of characters allowed in a response (including the terminating null) */
 #define MAX_RESPONSE 256
-
-/* the maximum number of Knowledge allowed in a cache */
-#define MAX_CACHE 256
-
-/* return codes for knowledge_get() and knowledge_put() */
-#define KB_OK        0
-#define KB_NOTFOUND -1
-#define KB_INVALID  -2
-#define KB_NOMEM    -3
-
-/* for caching of response */
-struct Knowledge {
-	char* intent;
-	char* entity;
-	char* response;
-};
-struct Knowledge knowledgeCache[MAX_CACHE];
-
-int CacheCounter;
 
 /* functions defined in main.c */
 int compare_token(const char *token1, const char *token2);
@@ -63,12 +45,5 @@ int chatbot_is_smalltalk(const char *intent);
 int chatbot_do_smalltalk(int inc, char *inv[], char *resonse, int n);
 char *get_entity(int inc, char *inv[]);
 void strjoin(char *dest, const char *joiner, char *strings[], int numberOfStrings, int offset);
-
-/* functions defined in knowledge.c */
-int knowledge_get(const char *intent, const char *entity, char *response, int n);
-int knowledge_put(const char *intent, const char *entity, const char *response);
-void knowledge_reset();
-int knowledge_read(FILE *f);
-void knowledge_write(FILE *f);
 
 #endif

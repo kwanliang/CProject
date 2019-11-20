@@ -20,7 +20,6 @@ const char *delimiters = " ?\t\n";
  * Main loop.
  */
 int main(int argc, char *argv[]) {
-
 	char input[MAX_INPUT];      /* buffer for holding the user input */
 	int inc;                    /* the number of words in the user input */
 	char *inv[MAX_INPUT];       /* pointers to the beginning of each word of input */
@@ -32,10 +31,12 @@ int main(int argc, char *argv[]) {
 	inv[0] = "reset";
 	inv[1] = NULL;
 	chatbot_do_reset(1, inv, output, MAX_RESPONSE);
-	
+
 	/* print a welcome message */
 	printf("%s: Hello, I'm %s.\n", chatbot_botname(), chatbot_botname());
 	
+	knowledge_init();
+
 	/* main command loop */
 	do {
 	
@@ -47,6 +48,7 @@ int main(int argc, char *argv[]) {
 			/* split it into words */
 			inc = 0;
 			inv[inc] = strtok(input, delimiters);
+
 			while (inv[inc] != NULL) {
 				
 				/* remove trailing punctuation */

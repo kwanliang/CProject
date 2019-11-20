@@ -172,11 +172,9 @@ int chatbot_is_load(const char *intent) {
 int chatbot_do_load(int inc, char *inv[], char *response, int n) {
 	
 	/* to be implemented */
-	 
 	return 0;
 	 
 }
-
 
 /*
  * Determine whether an intent is a question.
@@ -211,15 +209,23 @@ int chatbot_is_question(const char *intent) {
 int chatbot_do_question(int inc, char *inv[], char *response, int n) {
 	
 	/* to be implemented */
-
+	char* entity = get_entity(inc, inv);
 	// get and set knowledge cache
-	if (knowledge_get(inv[0], inv[1], response, n) == 0) {
-		snprintf(response, n, "FOUND SOMETHING");
-	}
-	else {
+	if (knowledge_get(inv[0], entity, response, n) == KB_NOTFOUND) {
 		//prompt_user
+		char* input = (char*)malloc(sizeof(input));
+		char* tempAsk = inv[0];
+		strcat(tempAsk, " IS IT?");
+		prompt_user(input, n, tempAsk);
+
+		if (knowledge_put(inv[0], entity, input) == KB_OK) {
+			snprintf(response, n, "OK I'LL REMEMBER THIS!");
+		}
+		else {
+			snprintf(response, n, "OH NO, SOMETHING WENT WRONG!");
+		}
 	}
-	snprintf(response, n, "FAILED TO FIND ANYTHING");
+	
 	return 0;
 }
 
@@ -251,7 +257,6 @@ int chatbot_is_reset(const char *intent) {
  *   0 (the chatbot always continues chatting after beign reset)
  */
 int chatbot_do_reset(int inc, char *inv[], char *response, int n) {
-	
 	knowledge_reset();
 	snprintf(response, n, "SUCCESSFULLY RESET");
 	return 0;
@@ -307,10 +312,15 @@ int chatbot_do_save(int inc, char *inv[], char *response, int n) {
  */
 int chatbot_is_smalltalk(const char *intent) {
 	
-	/* to be implemented */
-	
+	return compare_token(intent, "hi") == 0
+		|| compare_token(intent, "hello") == 0
+		|| compare_token(intent, "halo") == 0
+		|| compare_token(intent, "nice") == 0
+		|| compare_token(intent, "ok") == 0
+		|| compare_token(intent, "I") == 0
+		|| compare_token(intent, "so") == 0;
+
 	return 0;
- 
 }
 
 
@@ -326,10 +336,26 @@ int chatbot_is_smalltalk(const char *intent) {
  */
 int chatbot_do_smalltalk(int inc, char *inv[], char *response, int n) {
 	
-	/* to be implemented */
-	
+	if (compare_token("Hi", inv[0]) == 0)
+		snprintf(response, n, "Hi there human\n");
+
+	// I need to build a bot, can you help me with that"
+	else if (compare_token("I", inv[0]) == 0)
+		snprintf(response, n, "Sure, more bot friends for me :)\n");
+
+	// so why arent you helping me?
+	else if (compare_token("So", inv[0]) == 0)
+		snprintf(response, n, "you only asked if i can...\n");
+
+	else if (compare_token("ok", inv[0]) == 0)
+		snprintf(response, n, "hahahaha\n");
+
+	//nice joke
+	else if (compare_token("nice", inv[0]) == 0)
+		snprintf(response, n, "Thanks, i know i am funny~ hahaha\n");
+
+
 	return 0;
-	
 }
 
 

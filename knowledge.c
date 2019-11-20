@@ -15,7 +15,16 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
+#include "knowledge.h"
 #include "chat1002.h"
+
+void knowledge_init() {
+	for (int i = 0; i < KB_SIZE; ++i) {
+		WhatKB[i] = BlankKnowledge();
+		WhoKB[i] = BlankKnowledge();
+		WhereKB[i] = BlankKnowledge();
+	}
+}
 
 /*
  * Get the response to a question.
@@ -32,19 +41,30 @@
  *   KB_INVALID, if 'intent' is not a recognised question word
  */
 int knowledge_get(const char *intent, const char *entity, char *response, int n) {
-
-	for (int i = 0; i < CacheCounter; ++i) {
-		if (compare_token(knowledgeCache[i].intent, intent) != 0)
-			continue;
-		if (compare_token(knowledgeCache[i].entity, entity) != 0)
-			continue;
-
-		response = knowledgeCache[i].response;
-		return KB_OK;
+	if (compare_token(intent, "what") == 0) {
+		int hashIndex = hash_entity(entity);
+		char* tempResponse = GetResponse(WhatKB[hashIndex], entity);	
+		if (tempResponse != NULL) {
+			snprintf(response, n, tempResponse);
+			return KB_OK;
+		} else return KB_NOTFOUND;
+	} else if (compare_token(intent, "who") == 0) {
+		int hashIndex = hash_entity(entity);
+		char* tempResponse = GetResponse(WhoKB[hashIndex], entity);
+		if (tempResponse != NULL) {
+			snprintf(response, n, tempResponse);
+			return KB_OK;
+		} else return KB_NOTFOUND;
+	} else if (compare_token(intent, "where") == 0) {
+		int hashIndex = hash_entity(entity);
+		char* tempResponse = GetResponse(WhereKB[hashIndex], entity);
+		if (tempResponse != NULL) {
+			snprintf(response, n, tempResponse);
+			return KB_OK;
+		} else return KB_NOTFOUND;
 	}
 	
-	return KB_NOTFOUND;
-	
+	return KB_INVALID;
 }
 
 
@@ -65,12 +85,42 @@ int knowledge_get(const char *intent, const char *entity, char *response, int n)
  */
 int knowledge_put(const char *intent, const char *entity, const char *response) {
 
-	if (CacheCounter > MAX_CACHE)
-		return KB_NOMEM;
-
-	struct Knowledge temp = { .intent = intent, .entity = entity, .response = response};
-	knowledgeCache[CacheCounter] = temp;
-	CacheCounter++;
+	if (compare_token(intent, "what") == 0) {
+		// Calculate a index from the entity
+		int hashIndex = hash_entity(entity);
+		// Set Knowledge if empty
+		if (WhatKB[hashIndex]->entity == "") {
+			WhatKB[hashIndex]->entity = entity;
+			WhatKB[hashIndex]->response = response;
+		}
+		// Otherwise, append to the end its linked list
+		else 
+			GetEndKnowledge(WhatKB[hashIndex])->next = CreateKnowledge(entity, response);
+	}
+	else if (compare_token(intent, "who") == 0) {
+		// Calculate a index from the entity
+		int hashIndex = hash_entity(entity);
+		// Set Knowledge if empty
+		if (WhoKB[hashIndex]->entity == "") {
+			WhoKB[hashIndex]->entity = entity;
+			WhoKB[hashIndex]->response = response;
+		}
+		// Otherwise, append to the end its linked list
+		else
+			GetEndKnowledge(WhoKB[hashIndex])->next = CreateKnowledge(entity, response);
+	}
+	else if (compare_token(intent, "where") == 0) {
+		// Calculate a index from the entity
+		int hashIndex = hash_entity(entity);
+		// Set Knowledge if empty
+		if (WhereKB[hashIndex]->entity == "") {
+			WhereKB[hashIndex]->entity = entity;
+			WhereKB[hashIndex]->response = response;
+		}
+		// Otherwise, append to the end its linked list
+		else
+			GetEndKnowledge(WhereKB[hashIndex])->next = CreateKnowledge(entity, response);
+	}
 
 	return KB_OK;
 	
@@ -85,7 +135,7 @@ int knowledge_put(const char *intent, const char *entity, const char *response) 
  *
  * Returns: the number of entity/response pairs successful read from the file
  */
-int knowledge_read(FILE *fp) {
+int knowledge_read(FILE *f) {
 	FILE* fp = fopen("sample.ini", "r"); //opens sample.ini located at this file's location
 	if (fp == NULL) {
 		perror("Unable to open file!");
@@ -121,7 +171,7 @@ int knowledge_read(FILE *fp) {
 
 		if (line[len_used - 1] == '\n') {
 			fputs(line, stdout);
-			fputs("|*\n", stdout);
+			//fputs("|*\n", stdout);
 			line[0] = '\0';
 		}
 	}
@@ -138,7 +188,6 @@ int knowledge_read(FILE *fp) {
  */
 void knowledge_reset() {
 	
-	memset(knowledgeCache, 0, sizeof(knowledgeCache));
 	
 }
 
@@ -165,4 +214,99 @@ void knowledge_write(FILE *f) {
 	fclose(fptr); //closes and saves the file
 
 	
+}
+
+
+/*
+ * Create a new knowledge and assign given entity and response
+ *
+ * Input:
+ *   entity    - the entity
+ *   response  - the response for this question and entity
+ *
+ * Returns:
+ *   KNOWLEDGE_PTR, the created knowledge
+ */
+KNOWLEDGE_PTR CreateKnowledge(char* entity, char* response) {
+	KNOWLEDGE_PTR tempKnowledge = (KNOWLEDGE_PTR)malloc(sizeof(KNOWLEDGE_PTR));
+	tempKnowledge->entity = entity;
+	tempKnowledge->response = response;
+	tempKnowledge->next = NULL;
+	return tempKnowledge;
+}
+
+/*
+ * Create a new knowledge and initialize the variables
+ *
+ * Input:
+ *   entity    - the entity
+ *   response  - the response for this question and entity
+ *
+ * Returns:
+ *   KNOWLEDGE_PTR, the created knowledge
+ */
+KNOWLEDGE_PTR BlankKnowledge() {
+	KNOWLEDGE_PTR tempKnowledge = (KNOWLEDGE_PTR)malloc(sizeof(KNOWLEDGE_PTR));
+	tempKnowledge->entity = "";
+	tempKnowledge->response = "";
+	tempKnowledge->next = NULL;
+	return tempKnowledge;
+}
+
+/*
+ * Search for response in a Knowledge Base with matching entity 
+ *
+ * Input:
+ *   head	   - the start of a linked list of a Knowledge Base
+ *   entity    - the entity to search for
+ *
+ * Returns:
+ *   char*, the response if found
+ *	 NULL, otherwise
+ */
+char* GetResponse(KNOWLEDGE_PTR head, char* entity) {
+	KNOWLEDGE_PTR curr = head;
+	do {
+		if (compare_token(curr->entity, entity) == 0)
+			return curr->response;
+		curr = curr->next;
+	} while (curr != NULL);
+
+	return NULL;
+}
+
+/*
+ * Get the Knowledge at the end of a linked list of a Knowledge Base
+ *
+ * Input:
+ *   head	   - the start of a linked list of a Knowledge Base
+ *
+ * Returns:
+ *   KNOWLEDGE_PTR, the pointer to the end Knowledge
+ */
+KNOWLEDGE_PTR GetEndKnowledge(KNOWLEDGE_PTR head) {
+	KNOWLEDGE_PTR curr = head;
+	while (curr->next != NULL) {
+		curr = curr->next;
+	}
+	return curr;
+}
+
+/*
+ * Hashes string into integer to be used as index for Knowledge Base
+ *
+ * Input:
+ *   entity	   - the entity
+ *
+ * Returns:
+ *   int, the index after hashing
+ */
+int hash_entity(const char* entity) {
+	int total = 0; // Total value count of each character
+	int it = 0; // While loop iterator
+	while (entity[it] != '\0') {
+		total += (int)entity[it] + it + 1; // Add decimal of char and iterator index to total
+		it++; // Increment While loop iterator
+	}
+	return total % KB_SIZE; // Return hashed index that fits within range of KB_SIZE 
 }

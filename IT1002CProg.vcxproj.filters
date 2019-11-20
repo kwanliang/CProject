@@ -29,5 +29,8 @@
     <ClInclude Include="chat1002.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="knowledge.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
 </Project>
