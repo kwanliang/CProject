@@ -18,6 +18,55 @@
 #include "knowledge.h"
 #include "chat1002.h"
 
+#define MAX_SECTION 50
+#define MAX_NAME 50
+
+ /* Return pointer to first char (of chars) or inline comment in given string,
+	or pointer to null at end of string if neither found. Inline comment must
+	be prefixed by a whitespace character to register as a comment. */
+static char* find_chars_or_comment(const char* s, const char* chars)
+{
+#if INI_ALLOW_INLINE_COMMENTS
+	int was_space = 0;
+	while (*s && (!chars || !strchr(chars, *s)) &&
+		!(was_space && strchr(INI_INLINE_COMMENT_PREFIXES, *s))) {
+		was_space = isspace((unsigned char)(*s));
+		s++;
+	}
+#else
+	while (*s && (!chars || !strchr(chars, *s))) {
+		s++;
+	}
+#endif
+	return (char*)s;
+}
+
+
+/* Return pointer to first non-whitespace char in given string. */
+static char* lskip(const char* s)
+{
+	while (*s && isspace((unsigned char)(*s)))
+		s++;
+	return (char*)s;
+}
+
+/* Strip whitespace chars off end of given string, in place. Return s. */
+static char* rstrip(char* s)
+{
+	char* p = s + strlen(s);
+	while (p > s&& isspace((unsigned char)(*--p)))
+		*p = '\0';
+	return s;
+}
+
+/* Version of strncpy that ensures dest (size bytes) is null-terminated. */
+static char* strncpy0(char* dest, const char* src, size_t size)
+{
+	strncpy(dest, src, size - 1);
+	dest[size - 1] = '\0';
+	return dest;
+}
+
 void knowledge_init() {
 	for (int i = 0; i < KB_SIZE; ++i) {
 		WhatKB[i] = BlankKnowledge();
@@ -135,50 +184,53 @@ int knowledge_put(const char *intent, const char *entity, const char *response) 
  *
  * Returns: the number of entity/response pairs successful read from the file
  */
-int knowledge_read(FILE *f) {
-	FILE* fp = fopen("sample.ini", "r"); //opens sample.ini located at this file's location
-	if (fp == NULL) {
-		perror("Unable to open file!");
-		exit(1);
-	}
+void knowledge_read() {
+	char section[MAX_SECTION] = "";
+	char prev_name[MAX_NAME] = "";
+	char* perline;
+	char* start;
+	char* end;
+	char* name;
+	char* value;
 
-	char chunk[128];
+	static const char filename[] = "sample.ini";
+	FILE* file = fopen(filename, "r");
+	if (file != NULL)
+	{
+		char line[128]; /* or other suitable maximum line size */
+		while (fgets(line, sizeof line, file) != NULL) /* read a line */
+		{
+			//printf("%s", line);
+			start = line;
+			start = lskip(rstrip(start));
 
-	size_t len = sizeof(chunk);
-	char* line = malloc(len);
-	if (line == NULL) {
-		perror("Unable to allocate memory for the line buffer.");
-		exit(1);
-	}
-
-	line[0] = '\0';
-
-	while (fgets(chunk, sizeof(chunk), fp) != NULL) {
-		size_t len_used = strlen(line);
-		size_t chunk_used = strlen(chunk);
-
-		if (len - len_used < chunk_used) {
-			len *= 2;
-			if ((line = realloc(line, len)) == NULL) {
-				perror("Unable to reallocate memory for the line buffer.");
-				free(line);
-				exit(1);
+			if (*start == '[') {
+				end = find_chars_or_comment(start + 1, "]");
+				if (*end == ']') {
+					*end = '\0';
+					strncpy0(section, start + 1, sizeof(section));
+					printf("\n\n%s \n", section);
+				}
+			}
+			else if (*start) {
+				end = find_chars_or_comment(start, "=");
+				if (*end == '=') {
+					*end = '\0';
+					name = rstrip(start);
+					value = end + 1;
+					value = lskip(value);
+					rstrip(value);
+					printf("\nName: %s", name);
+					printf("\nValue: %s", value);
+				}
 			}
 		}
-
-		strncpy(line + len_used, chunk, len - len_used);
-		len_used += chunk_used;
-
-		if (line[len_used - 1] == '\n') {
-			fputs(line, stdout);
-			//fputs("|*\n", stdout);
-			line[0] = '\0';
-		}
+		fclose(file);
 	}
-
-	fclose(fp);
-	free(line);
-	
+	else
+	{
+		perror(filename); /* why didn't the file open? */
+	}
 	return 0;
 }
 
@@ -196,24 +248,130 @@ void knowledge_reset() {
  * Write the knowledge base to a file.
  *
  * Input:
- *   f - the file
+ *   knowledge_write(<filename>, <section>, <key>, <value>);
  */
-void knowledge_write(FILE *f) {
-	
-	char sentence[1000]; //variable for testing purposes
-	FILE* fptr;
+int knowledge_write(char* pacPath, char* pacSection, char* pacKey, char* pacValue) {
+	//module variables
+	int iFoundSection;
+	int iFoundKey;
+	int iError;
+	long SectionFilePos;
+	int iKeyLength;
+	int iValueLength;
+	char acSectionHeading[80];
+	char acLastSectionHeading[80];
+	char acKeyHeading[80];
+	char acIniLine[160];
+	char acIniPath[160];
+	char acTempPath[160];
+	FILE* pFIniFile;
+	FILE* pFTempIni;
 
-	fptr = fopen("sample.txt", "w"); //creates a sample.txt at this file's location
-	if (fptr == NULL) {
-		printf("Error!");
-		exit(1);
+	iError = 0;
+	acLastSectionHeading[0] = '\0';
+
+	strcpy(acIniPath, pacPath);
+
+	strcpy(acTempPath, pacPath);
+	strcat(acTempPath, "temp");
+
+	// add brackets to section
+	strcpy(acSectionHeading, "[");
+	strcat(acSectionHeading, pacSection);
+	strcat(acSectionHeading, "]\n");
+	// adds '=' to key
+	strcpy(acKeyHeading, pacKey);
+	strcat(acKeyHeading, "=");
+
+	iKeyLength = strlen(acKeyHeading);
+	iValueLength = strlen(pacValue);
+
+	iFoundSection = 0;
+	iFoundKey = 0;
+
+	if ((pFTempIni = fopen(acTempPath, "w")) == NULL) {
+		printf("Could not open temp ini file to write settings\n");
+		iError = 1;
+		return (iError);
 	}
 
-	fgets(sentence, 1000, stdin); //user's input for the knowledge 
-	fprintf(fptr, "%s", sentence); //writes input into sample.txt
-	fclose(fptr); //closes and saves the file
+	// try to open current config file for reading
+	if ((pFIniFile = fopen(acIniPath, "r")) != NULL) {
+		// read a line from the config file until EOF
+		while (fgets(acIniLine, 159, pFIniFile) != NULL) {
+			// the key has been found so continue reading file to end
+			if (iFoundKey == 1) {
+				fputs(acIniLine, pFTempIni);
+				continue;
+			}
+			// section has not been found yet
+			if (iFoundSection == 0) {
+				if (strcmp(acSectionHeading, acIniLine) == 0) {
+					// found the section
+					iFoundSection = 1;
+				}
+				fputs(acIniLine, pFTempIni);
+				continue;
+			}
+			// the key has not been found yet
+			if ((iFoundKey == 0) && (iFoundSection == 1)) {
+				if (strncmp(acKeyHeading, acIniLine, iKeyLength) == 0) {
+					// found the key
+					iFoundKey = 1;
+					if (iValueLength > 0) {
+						fputs(acKeyHeading, pFTempIni);
+						fputs(pacValue, pFTempIni);
+						fputs("\n", pFTempIni);
+					}
+					continue;
+				}
+				// if newline or [, the end of the section has been reached
+				// so add the key to the section
+				if ((acIniLine[0] == '\n') || (acIniLine[0] == '[')) {
+					iFoundKey = 1;
+					if (iValueLength > 0) {
+						fputs(acKeyHeading, pFTempIni);
+						fputs(pacValue, pFTempIni);
+						fputs("\n", pFTempIni);
+					}
+					fputs("\n", pFTempIni);
+					if (acIniLine[0] == '[') {
+						fputs(acIniLine, pFTempIni);
+					}
+					continue;
+				}
+				// if the key has not been found, write line to temp file
+				if (iFoundKey == 0) {
+					fputs(acIniLine, pFTempIni);
+					continue;
+				}
+			}
+		}
+		fclose(pFIniFile);
+	}
+	// still did not find the key after reading the file
+	if (iFoundKey == 0) {
+		// file does not exist
+		// or section does not exist so write to temp file
+		if (iValueLength > 0) {
+			if (iFoundSection == 0) {
+				fputs(acSectionHeading, pFTempIni);
+			}
+			fputs(acKeyHeading, pFTempIni);
+			fputs(pacValue, pFTempIni);
+			fputs("\n\n", pFTempIni);
+		}
+	}
 
-	
+	fclose(pFTempIni);
+
+	//delete the ini file
+	remove(acIniPath);
+
+	// rename the temp file to ini file
+	rename(acTempPath, acIniPath);
+
+	return (iError);
 }
 
 
