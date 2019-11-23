@@ -177,6 +177,102 @@ int knowledge_put(const char *intent, const char *entity, const char *response) 
 
 
 /*
+ * Re-initialize a KNOWLEDGE node.
+ *
+ * Input:
+ *   KNOWLEDGE_PTR, linked list node
+ */
+void ResetNode(KNOWLEDGE_PTR node) {
+	node->entity = "";
+	node->response = "";
+	node->next = NULL;
+}
+
+/*
+ * Reset the knowledge base, removing all known entities from all intents.
+ *
+ * Input:
+ *   KNOWLEDGE_PTR, head of linked list which is each index of Knowledge Base
+ */
+void ResetLinkedList(KNOWLEDGE_PTR head) {
+	KNOWLEDGE_PTR curr = head;
+	KNOWLEDGE_PTR next = curr->next;
+
+	// if only head exist
+	if (next == NULL) {
+		// re-initialize head and return
+		ResetNode(curr);
+		return;
+	}
+	else {
+		// keep memory of head, only reinitialize head
+		ResetNode(curr);
+		// move on to the next node
+		curr = next;
+		next = next->next;
+	}
+
+	// free memory of subsequent nodes
+	do {	
+		free(curr);
+		curr = next;
+		next = next->next;
+	} while (curr != NULL);
+}
+
+/*
+ * Free up all allocated memory to a Knowledge Base
+ *
+ * Input:
+ *   KNOWLEDGE_PTR, head of linked list which is each index of Knowledge Base
+ */
+void FreeLinkedList(KNOWLEDGE_PTR head) {
+	KNOWLEDGE_PTR curr = head;
+	KNOWLEDGE_PTR next = curr->next;
+
+	// if only head exist
+	if (next == NULL) {
+		// free head memory
+		free(curr);
+		return;
+	}
+
+	// free memory of subsequent nodes
+	do {
+		free(curr);
+		curr = next;
+		next = next->next;
+	} while (curr != NULL);
+}
+
+
+/*
+ * Reset the knowledge base, removing all known entities from all intents.
+ *
+ * Input:
+ *   int, 1 if exiting the program, 0 otherwise
+ */
+void knowledge_reset(int exit) {
+	if (exit) {
+		// free all allocation memory
+		for (int i = 0; i < KB_SIZE; ++i) {
+			FreeLinkedList(WhatKB[i]);
+			FreeLinkedList(WhoKB[i]);
+			FreeLinkedList(WhereKB[i]);
+		}
+	}
+	else {
+		// free all allocation memory, except head node
+		for (int i = 0; i < KB_SIZE; ++i) {
+			ResetLinkedList(WhatKB[i]);
+			ResetLinkedList(WhoKB[i]);
+			ResetLinkedList(WhereKB[i]);
+		}
+	}
+}
+
+
+/*
  * Read a knowledge base from a file.
  *
  * Input:
@@ -223,16 +319,6 @@ void knowledge_read(FILE *f) {
 		}
 	}
 }
-
-
-/*
- * Reset the knowledge base, removing all know entitities from all intents.
- */
-void knowledge_reset() {
-	
-	
-}
-
 
 /*
  * Write the knowledge base to a file.

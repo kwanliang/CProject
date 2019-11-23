@@ -135,11 +135,10 @@ int chatbot_is_exit(const char *intent) {
  *   0 (the chatbot always continues chatting after a question)
  */
 int chatbot_do_exit(int inc, char *inv[], char *response, int n) {
-	 
+	knowledge_reset(1);
 	snprintf(response, n, "Goodbye!");
 	 
 	return 1;
-	 
 }
 
 
@@ -224,6 +223,7 @@ int chatbot_do_question(int inc, char *inv[], char *response, int n) {
 
 	// If entity not found in knowledge base
 	if (knowledge_get(inv[0], entity, response, n) == KB_NOTFOUND) {
+
 		//prompt_user
 		char* input = (char*)malloc(sizeof(MAX_INPUT));
 		char* tempAsk = (char*)malloc(sizeof(MAX_RESPONSE));
@@ -275,8 +275,8 @@ int chatbot_is_reset(const char *intent) {
  *   0 (the chatbot always continues chatting after beign reset)
  */
 int chatbot_do_reset(int inc, char *inv[], char *response, int n) {
-	knowledge_reset();
-	snprintf(response, n, "SUCCESSFULLY RESET");
+	knowledge_reset(0);
+	snprintf(response, n, "RESET SUCCESSFUL");
 	return 0;
 	 
 }

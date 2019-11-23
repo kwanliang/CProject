@@ -28,11 +28,14 @@ KNOWLEDGE_PTR BlankKnowledge();
 KNOWLEDGE_PTR GetEndKnowledge(KNOWLEDGE_PTR head);
 char* GetResponse(KNOWLEDGE_PTR head, char* entity);
 int hash_entity(const char* entity);
+void ResetLinkedList(KNOWLEDGE_PTR head);
+void FreeLinkedList(KNOWLEDGE_PTR head);
+void ResetNode(KNOWLEDGE_PTR node);
 
 /* functions defined in knowledge.c */
 void knowledge_init();
 int knowledge_get(const char* intent, const char* entity, char* response, int n);
 int knowledge_put(const char* intent, const char* entity, const char* response);
-void knowledge_reset();
-void knowledge_read(FILE *f);
+void knowledge_reset(int exit);
+void knowledge_read(FILE* f);
 int knowledge_write(char* pacPath, char* pacSection, char* pacKey, char* pacValue);
