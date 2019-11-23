@@ -6,13 +6,28 @@
 #define KB_INVALID  -2
 #define KB_NOMEM    -3
 
+#define MAX_SECTION 50
+#define MAX_NAME 50
+
 /* the maximum number of Knowledge allowed in a cache */
 #define KB_SIZE 67
 
+/* the maximum number of characters we expect in a line of input (including the terminating null)  */
+#define MAX_INPUT    256
+
+/* the maximum number of characters allowed in the name of an intent (including the terminating null)  */
+#define MAX_INTENT   32
+
+/* the maximum number of characters allowed in the name of an entity (including the terminating null)  */
+#define MAX_ENTITY   64
+
+/* the maximum number of characters allowed in a response (including the terminating null) */
+#define MAX_RESPONSE 256
+
 /* for caching of response */
 typedef struct Knowledge {
-	char* entity;
-	char* response;
+	char entity[MAX_ENTITY];
+	char response[MAX_RESPONSE];
 	struct Knowledge* next;
 }KNOWLEDGE;
 typedef KNOWLEDGE* KNOWLEDGE_PTR;

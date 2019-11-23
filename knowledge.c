@@ -18,9 +18,6 @@
 #include "knowledge.h"
 #include "chat1002.h"
 
-#define MAX_SECTION 50
-#define MAX_NAME 50
-
  /* Return pointer to first char (of chars) or inline comment in given string,
 	or pointer to null at end of string if neither found. Inline comment must
 	be prefixed by a whitespace character to register as a comment. */
@@ -138,9 +135,9 @@ int knowledge_put(const char *intent, const char *entity, const char *response) 
 		// Calculate a index from the entity
 		int hashIndex = hash_entity(entity);
 		// Set Knowledge if empty
-		if (WhatKB[hashIndex]->entity == "") {
-			WhatKB[hashIndex]->entity = entity;
-			WhatKB[hashIndex]->response = response;
+		if (strlen(WhatKB[hashIndex]->entity) == 0) {
+			strcpy(WhatKB[hashIndex]->entity, entity);
+			strcpy(WhatKB[hashIndex]->response, response);
 		}
 		// Otherwise, append to the end its linked list
 		else 
@@ -150,9 +147,9 @@ int knowledge_put(const char *intent, const char *entity, const char *response) 
 		// Calculate a index from the entity
 		int hashIndex = hash_entity(entity);
 		// Set Knowledge if empty
-		if (WhoKB[hashIndex]->entity == "") {
-			WhoKB[hashIndex]->entity = entity;
-			WhoKB[hashIndex]->response = response;
+		if (strlen(WhoKB[hashIndex]->entity) == 0) {
+			strcpy(WhatKB[hashIndex]->entity, entity);
+			strcpy(WhatKB[hashIndex]->response, response);
 		}
 		// Otherwise, append to the end its linked list
 		else
@@ -162,17 +159,16 @@ int knowledge_put(const char *intent, const char *entity, const char *response) 
 		// Calculate a index from the entity
 		int hashIndex = hash_entity(entity);
 		// Set Knowledge if empty
-		if (WhereKB[hashIndex]->entity == "") {
-			WhereKB[hashIndex]->entity = entity;
-			WhereKB[hashIndex]->response = response;
+		if (strlen(WhereKB[hashIndex]->entity) == 0) {
+			strcpy(WhatKB[hashIndex]->entity, entity);
+			strcpy(WhatKB[hashIndex]->response, response);
 		}
 		// Otherwise, append to the end its linked list
 		else
 			GetEndKnowledge(WhereKB[hashIndex])->next = CreateKnowledge(entity, response);
 	}
 
-	return KB_OK;
-	
+	return KB_OK;	
 }
 
 
@@ -183,8 +179,8 @@ int knowledge_put(const char *intent, const char *entity, const char *response) 
  *   KNOWLEDGE_PTR, linked list node
  */
 void ResetNode(KNOWLEDGE_PTR node) {
-	node->entity = "";
-	node->response = "";
+	strcpy(node->entity, "");
+	strcpy(node->response, "");
 	node->next = NULL;
 }
 
@@ -282,16 +278,14 @@ void knowledge_reset(int exit) {
  */
 void knowledge_read(FILE *f) {
 	char section[MAX_SECTION] = "";
-	char prev_name[MAX_NAME] = "";
-	char* perline;
-	char* start;
-	char* end;
-	char* name;
-	char* value;
-
 	char line[128]; /* or other suitable maximum line size */
 	while (fgets(line, sizeof(line), f) != NULL) /* read a line */
 	{
+		char* start;
+		char* end;
+		char* name;
+		char* value;
+
 		//printf("%s", line);
 		start = line;
 		start = lskip(rstrip(start));
@@ -312,8 +306,6 @@ void knowledge_read(FILE *f) {
 				value = end + 1;
 				value = lskip(value);
 				rstrip(value);
-				// printf("\nName: %s", name);
-				// printf("\nValue: %s", value);
 				printf("KNOWLEDGE PUT%8s%32s\t%s\t%d\n", section, name, value, knowledge_put(section, name, value));
 			}
 		}
@@ -463,8 +455,8 @@ int knowledge_write(char* pacPath, char* pacSection, char* pacKey, char* pacValu
  */
 KNOWLEDGE_PTR CreateKnowledge(char* entity, char* response) {
 	KNOWLEDGE_PTR tempKnowledge = (KNOWLEDGE_PTR)malloc(sizeof(KNOWLEDGE));
-	tempKnowledge->entity = entity;
-	tempKnowledge->response = response;
+	strcpy(tempKnowledge->entity, entity);
+	strcpy(tempKnowledge->response, response);
 	tempKnowledge->next = NULL;
 	return tempKnowledge;
 }
@@ -481,8 +473,8 @@ KNOWLEDGE_PTR CreateKnowledge(char* entity, char* response) {
  */
 KNOWLEDGE_PTR BlankKnowledge() {
 	KNOWLEDGE_PTR tempKnowledge = (KNOWLEDGE_PTR)malloc(sizeof(KNOWLEDGE));
-	tempKnowledge->entity = "";
-	tempKnowledge->response = "";
+	strcpy(tempKnowledge->entity, "");
+	strcpy(tempKnowledge->response, "");
 	tempKnowledge->next = NULL;
 	return tempKnowledge;
 }

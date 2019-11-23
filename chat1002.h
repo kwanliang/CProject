@@ -11,18 +11,6 @@
 #include <stdio.h>
 #include "knowledge.h"
 
-/* the maximum number of characters we expect in a line of input (including the terminating null)  */
-#define MAX_INPUT    256
-
-/* the maximum number of characters allowed in the name of an intent (including the terminating null)  */
-#define MAX_INTENT   32
-
-/* the maximum number of characters allowed in the name of an entity (including the terminating null)  */
-#define MAX_ENTITY   64
-
-/* the maximum number of characters allowed in a response (including the terminating null) */
-#define MAX_RESPONSE 256
-
 /* functions defined in main.c */
 int compare_token(const char *token1, const char *token2);
 void prompt_user(char *buf, int n, const char *format, ...);

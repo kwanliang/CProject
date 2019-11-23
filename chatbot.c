@@ -170,7 +170,8 @@ int chatbot_is_load(const char *intent) {
  */
 int chatbot_do_load(int inc, char *inv[], char *response, int n) {
 
-	FILE *f = fopen(get_entity(inc, inv), "r");
+	char* fileName = get_entity(inc, inv);
+	FILE *f = fopen(fileName, "r");
 
 	// Unable to open file
 	if (f == NULL)
@@ -178,10 +179,11 @@ int chatbot_do_load(int inc, char *inv[], char *response, int n) {
 		snprintf(response, n, "UNABLE TO OPEN FILE");
 		return 0;
 	}
-
+	// Reset the current Knowledge Base
+	knowledge_reset(0);
 	knowledge_read(f);
 	fclose(f);
-
+	free(fileName);
 	snprintf(response, n, "FILE LOADED");
 	return 0;
 	 
@@ -225,11 +227,10 @@ int chatbot_do_question(int inc, char *inv[], char *response, int n) {
 	if (knowledge_get(inv[0], entity, response, n) == KB_NOTFOUND) {
 
 		//prompt_user
-		char* input = (char*)malloc(sizeof(MAX_INPUT));
-		char* tempAsk = (char*)malloc(sizeof(MAX_RESPONSE));
+		char input[MAX_RESPONSE];
+		char* tempAsk[MAX_RESPONSE];
 		strcpy(tempAsk, "I don't know,");
-		for (int i = 0; i < inc; ++i)
-		{
+		for (int i = 0; i < inc; ++i) {
 			strcat(tempAsk, " ");
 			strcat(tempAsk, inv[i]);
 		}
@@ -243,7 +244,7 @@ int chatbot_do_question(int inc, char *inv[], char *response, int n) {
 			snprintf(response, n, "OH NO, SOMETHING WENT WRONG!");
 		}
 	}
-	
+	free(entity);
 	return 0;
 }
 
@@ -310,8 +311,42 @@ int chatbot_is_save(const char *intent) {
  */
 int chatbot_do_save(int inc, char *inv[], char *response, int n) {
 	
-	/* to be implemented */
+	char* fileName = get_entity(inc, inv);
 
+	for (int i = 0; i < KB_SIZE; ++i) {
+		if (strlen(WhatKB[i]->entity) != 0) {
+			knowledge_write(fileName, "what", WhatKB[i]->entity, WhatKB[i]->response);
+			if (WhatKB[i]->next != NULL) {
+				KNOWLEDGE_PTR curr = WhatKB[i]->next;
+				do {
+					knowledge_write(fileName, "what", curr->entity, curr->response);
+					curr = curr->next;
+				} while (curr != NULL);
+			}
+		}
+		if (strlen(WhoKB[i]->entity) != 0) {
+			knowledge_write(fileName, "what", WhoKB[i]->entity, WhoKB[i]->response);
+			if (WhoKB[i]->next != NULL) {
+				KNOWLEDGE_PTR curr = WhoKB[i]->next;
+				do {
+					knowledge_write(fileName, "what", curr->entity, curr->response);
+					curr = curr->next;
+				} while (curr != NULL);
+			}
+		}
+		if (strlen(WhereKB[i]->entity) != 0) {
+			knowledge_write(fileName, "what", WhereKB[i]->entity, WhereKB[i]->response);
+			if (WhereKB[i]->next != NULL) {
+				KNOWLEDGE_PTR curr = WhereKB[i]->next;
+				do {
+					knowledge_write(fileName, "what", curr->entity, curr->response);
+					curr = curr->next;
+				} while (curr != NULL);
+			}
+		}
+	}
+
+	snprintf(response, n, "SAVE SUCCESSFUL");
 	return 0;
 	 
 }
@@ -407,7 +442,12 @@ char *get_entity(int inc, char *inv[])
 	// Number of words between start of entity and start of input
 	int offset = 1;
 	char *intent = inv[0];
-	char *entity = malloc(MAX_ENTITY);
+	char *entity = (char*)malloc(MAX_ENTITY);
+	/* memory not allocated handling */
+	if (entity == NULL) {
+		printf("Memory not allocated.\n");
+		exit(0);
+	}
 	memset(entity, '\0', sizeof(entity));
 
 	// Intent is WHAT | WHERE | WHO
