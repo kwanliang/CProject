@@ -170,8 +170,20 @@ int chatbot_is_load(const char *intent) {
  *   0 (the chatbot always continues chatting after loading knowledge)
  */
 int chatbot_do_load(int inc, char *inv[], char *response, int n) {
-	
-	/* to be implemented */
+
+	FILE *f = fopen(get_entity(inc, inv), "r");
+
+	// Unable to open file
+	if (f == NULL)
+	{
+		snprintf(response, n, "UNABLE TO OPEN FILE");
+		return 0;
+	}
+
+	knowledge_read(f);
+	fclose(f);
+
+	snprintf(response, n, "FILE LOADED");
 	return 0;
 	 
 }
@@ -208,14 +220,20 @@ int chatbot_is_question(const char *intent) {
  */
 int chatbot_do_question(int inc, char *inv[], char *response, int n) {
 	
-	/* to be implemented */
 	char* entity = get_entity(inc, inv);
-	// get and set knowledge cache
+
+	// If entity not found in knowledge base
 	if (knowledge_get(inv[0], entity, response, n) == KB_NOTFOUND) {
 		//prompt_user
-		char* input = (char*)malloc(sizeof(input));
-		char* tempAsk = inv[0];
-		strcat(tempAsk, " IS IT?");
+		char* input = (char*)malloc(sizeof(MAX_INPUT));
+		char* tempAsk = (char*)malloc(sizeof(MAX_RESPONSE));
+		strcpy(tempAsk, "I don't know,");
+		for (int i = 0; i < inc; ++i)
+		{
+			strcat(tempAsk, " ");
+			strcat(tempAsk, inv[i]);
+		}
+		strcat(tempAsk, "?");
 		prompt_user(input, n, tempAsk);
 
 		if (knowledge_put(inv[0], entity, input) == KB_OK) {
@@ -337,22 +355,22 @@ int chatbot_is_smalltalk(const char *intent) {
 int chatbot_do_smalltalk(int inc, char *inv[], char *response, int n) {
 	
 	if (compare_token("Hi", inv[0]) == 0)
-		snprintf(response, n, "Hi there human\n");
+		snprintf(response, n, "Hi there human");
 
 	// I need to build a bot, can you help me with that"
 	else if (compare_token("I", inv[0]) == 0)
-		snprintf(response, n, "Sure, more bot friends for me :)\n");
+		snprintf(response, n, "Sure, more bot friends for me :)");
 
 	// so why arent you helping me?
 	else if (compare_token("So", inv[0]) == 0)
-		snprintf(response, n, "you only asked if i can...\n");
+		snprintf(response, n, "you only asked if i can...");
 
 	else if (compare_token("ok", inv[0]) == 0)
-		snprintf(response, n, "hahahaha\n");
+		snprintf(response, n, "hahahaha");
 
 	//nice joke
 	else if (compare_token("nice", inv[0]) == 0)
-		snprintf(response, n, "Thanks, i know i am funny~ hahaha\n");
+		snprintf(response, n, "Thanks, i know i am funny~ hahaha");
 
 
 	return 0;

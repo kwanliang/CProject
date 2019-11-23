@@ -184,7 +184,7 @@ int knowledge_put(const char *intent, const char *entity, const char *response) 
  *
  * Returns: the number of entity/response pairs successful read from the file
  */
-void knowledge_read() {
+void knowledge_read(FILE *f) {
 	char section[MAX_SECTION] = "";
 	char prev_name[MAX_NAME] = "";
 	char* perline;
@@ -193,45 +193,35 @@ void knowledge_read() {
 	char* name;
 	char* value;
 
-	static const char filename[] = "sample.ini";
-	FILE* file = fopen(filename, "r");
-	if (file != NULL)
+	char line[128]; /* or other suitable maximum line size */
+	while (fgets(line, sizeof(line), f) != NULL) /* read a line */
 	{
-		char line[128]; /* or other suitable maximum line size */
-		while (fgets(line, sizeof line, file) != NULL) /* read a line */
-		{
-			//printf("%s", line);
-			start = line;
-			start = lskip(rstrip(start));
-
-			if (*start == '[') {
-				end = find_chars_or_comment(start + 1, "]");
-				if (*end == ']') {
-					*end = '\0';
-					strncpy0(section, start + 1, sizeof(section));
-					printf("\n\n%s \n", section);
-				}
-			}
-			else if (*start) {
-				end = find_chars_or_comment(start, "=");
-				if (*end == '=') {
-					*end = '\0';
-					name = rstrip(start);
-					value = end + 1;
-					value = lskip(value);
-					rstrip(value);
-					printf("\nName: %s", name);
-					printf("\nValue: %s", value);
-				}
+		//printf("%s", line);
+		start = line;
+		start = lskip(rstrip(start));
+	
+		if (*start == '[') {
+			end = find_chars_or_comment(start + 1, "]");
+			if (*end == ']') {
+				*end = '\0';
+				strncpy0(section, start + 1, sizeof(section));
+				// printf("\n\n%s \n", section);
 			}
 		}
-		fclose(file);
+		else if (*start) {
+			end = find_chars_or_comment(start, "=");
+			if (*end == '=') {
+				*end = '\0';
+				name = rstrip(start);
+				value = end + 1;
+				value = lskip(value);
+				rstrip(value);
+				// printf("\nName: %s", name);
+				// printf("\nValue: %s", value);
+				printf("KNOWLEDGE PUT%8s%32s\t%s\t%d\n", section, name, value, knowledge_put(section, name, value));
+			}
+		}
 	}
-	else
-	{
-		perror(filename); /* why didn't the file open? */
-	}
-	return 0;
 }
 
 
@@ -386,7 +376,7 @@ int knowledge_write(char* pacPath, char* pacSection, char* pacKey, char* pacValu
  *   KNOWLEDGE_PTR, the created knowledge
  */
 KNOWLEDGE_PTR CreateKnowledge(char* entity, char* response) {
-	KNOWLEDGE_PTR tempKnowledge = (KNOWLEDGE_PTR)malloc(sizeof(KNOWLEDGE_PTR));
+	KNOWLEDGE_PTR tempKnowledge = (KNOWLEDGE_PTR)malloc(sizeof(KNOWLEDGE));
 	tempKnowledge->entity = entity;
 	tempKnowledge->response = response;
 	tempKnowledge->next = NULL;
@@ -404,7 +394,7 @@ KNOWLEDGE_PTR CreateKnowledge(char* entity, char* response) {
  *   KNOWLEDGE_PTR, the created knowledge
  */
 KNOWLEDGE_PTR BlankKnowledge() {
-	KNOWLEDGE_PTR tempKnowledge = (KNOWLEDGE_PTR)malloc(sizeof(KNOWLEDGE_PTR));
+	KNOWLEDGE_PTR tempKnowledge = (KNOWLEDGE_PTR)malloc(sizeof(KNOWLEDGE));
 	tempKnowledge->entity = "";
 	tempKnowledge->response = "";
 	tempKnowledge->next = NULL;
