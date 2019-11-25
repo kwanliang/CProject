@@ -148,8 +148,8 @@ int knowledge_put(const char *intent, const char *entity, const char *response) 
 		int hashIndex = hash_entity(entity);
 		// Set Knowledge if empty
 		if (strlen(WhoKB[hashIndex]->entity) == 0) {
-			strcpy(WhatKB[hashIndex]->entity, entity);
-			strcpy(WhatKB[hashIndex]->response, response);
+			strcpy(WhoKB[hashIndex]->entity, entity);
+			strcpy(WhoKB[hashIndex]->response, response);
 		}
 		// Otherwise, append to the end its linked list
 		else
@@ -160,8 +160,8 @@ int knowledge_put(const char *intent, const char *entity, const char *response) 
 		int hashIndex = hash_entity(entity);
 		// Set Knowledge if empty
 		if (strlen(WhereKB[hashIndex]->entity) == 0) {
-			strcpy(WhatKB[hashIndex]->entity, entity);
-			strcpy(WhatKB[hashIndex]->response, response);
+			strcpy(WhereKB[hashIndex]->entity, entity);
+			strcpy(WhereKB[hashIndex]->response, response);
 		}
 		// Otherwise, append to the end its linked list
 		else
@@ -530,8 +530,17 @@ KNOWLEDGE_PTR GetEndKnowledge(KNOWLEDGE_PTR head) {
 int hash_entity(const char* entity) {
 	int total = 0; // Total value count of each character
 	int it = 0; // While loop iterator
-	while (entity[it] != '\0') {
-		total += (int)entity[it] + it + 1; // Add decimal of char and iterator index to total
+	
+	// For case-insensitive matching
+	char *entity_lower = (char *)malloc(MAX_ENTITY);
+	strncpy(entity_lower, entity, MAX_ENTITY);
+	for (char* it = entity_lower; (*it) != '\0'; ++it)
+	{
+		(*it) = tolower(*it);
+	}
+
+	while (entity_lower[it] != '\0') {
+		total += (int)entity_lower[it] + it + 1; // Add decimal of char and iterator index to total
 		it++; // Increment While loop iterator
 	}
 	return total % KB_SIZE; // Return hashed index that fits within range of KB_SIZE 
