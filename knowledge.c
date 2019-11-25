@@ -306,7 +306,7 @@ void knowledge_read(FILE *f) {
 				value = end + 1;
 				value = lskip(value);
 				rstrip(value);
-				printf("KNOWLEDGE PUT%8s%32s\t%s\t%d\n", section, name, value, knowledge_put(section, name, value));
+				knowledge_put(section, name, value);
 			}
 		}
 	}
@@ -543,5 +543,6 @@ int hash_entity(const char* entity) {
 		total += (int)entity_lower[it] + it + 1; // Add decimal of char and iterator index to total
 		it++; // Increment While loop iterator
 	}
+	free(entity_lower);
 	return total % KB_SIZE; // Return hashed index that fits within range of KB_SIZE 
 }

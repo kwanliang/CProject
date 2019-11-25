@@ -325,21 +325,21 @@ int chatbot_do_save(int inc, char *inv[], char *response, int n) {
 			}
 		}
 		if (strlen(WhoKB[i]->entity) != 0) {
-			knowledge_write(fileName, "what", WhoKB[i]->entity, WhoKB[i]->response);
+			knowledge_write(fileName, "who", WhoKB[i]->entity, WhoKB[i]->response);
 			if (WhoKB[i]->next != NULL) {
 				KNOWLEDGE_PTR curr = WhoKB[i]->next;
 				do {
-					knowledge_write(fileName, "what", curr->entity, curr->response);
+					knowledge_write(fileName, "who", curr->entity, curr->response);
 					curr = curr->next;
 				} while (curr != NULL);
 			}
 		}
 		if (strlen(WhereKB[i]->entity) != 0) {
-			knowledge_write(fileName, "what", WhereKB[i]->entity, WhereKB[i]->response);
+			knowledge_write(fileName, "where", WhereKB[i]->entity, WhereKB[i]->response);
 			if (WhereKB[i]->next != NULL) {
 				KNOWLEDGE_PTR curr = WhereKB[i]->next;
 				do {
-					knowledge_write(fileName, "what", curr->entity, curr->response);
+					knowledge_write(fileName, "where", curr->entity, curr->response);
 					curr = curr->next;
 				} while (curr != NULL);
 			}
