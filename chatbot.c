@@ -39,22 +39,22 @@
  * chatbot_username(), respectively. The main loop will print the strings
  * returned by these functions at the start of each line.
  */
- 
+
 #include <stdio.h>
 #include <string.h>
 #include <stdlib.h>
 #include "chat1002.h"
- 
- 
-/*
- * Get the name of the chatbot.
- *
- * Returns: the name of the chatbot as a null-terminated string
- */
-const char *chatbot_botname() {
+
+
+ /*
+  * Get the name of the chatbot.
+  *
+  * Returns: the name of the chatbot as a null-terminated string
+  */
+const char* chatbot_botname() {
 
 	return "Chatbot";
-	
+
 }
 
 
@@ -63,10 +63,10 @@ const char *chatbot_botname() {
  *
  * Returns: the name of the user as a null-terminated string
  */
-const char *chatbot_username() {
+const char* chatbot_username() {
 
 	return "User";
-	
+
 }
 
 
@@ -80,8 +80,8 @@ const char *chatbot_username() {
  *   0, if the chatbot should continue chatting
  *   1, if the chatbot should stop (i.e. it detected the EXIT intent)
  */
-int chatbot_main(int inc, char *inv[], char *response, int n) {
-	
+int chatbot_main(int inc, char* inv[], char* response, int n) {
+
 	/* check for empty input */
 	if (inc < 1) {
 		snprintf(response, n, "");
@@ -118,10 +118,10 @@ int chatbot_main(int inc, char *inv[], char *response, int n) {
  *  1, if the intent is "exit" or "quit"
  *  0, otherwise
  */
-int chatbot_is_exit(const char *intent) {
-	
+int chatbot_is_exit(const char* intent) {
+
 	return compare_token(intent, "exit") == 0 || compare_token(intent, "quit") == 0;
-	
+
 }
 
 
@@ -134,10 +134,10 @@ int chatbot_is_exit(const char *intent) {
  * Returns:
  *   0 (the chatbot always continues chatting after a question)
  */
-int chatbot_do_exit(int inc, char *inv[], char *response, int n) {
+int chatbot_do_exit(int inc, char* inv[], char* response, int n) {
 	knowledge_reset(1);
 	snprintf(response, n, "Goodbye!");
-	 
+
 	return 1;
 }
 
@@ -152,10 +152,10 @@ int chatbot_do_exit(int inc, char *inv[], char *response, int n) {
  *  1, if the intent is "load"
  *  0, otherwise
  */
-int chatbot_is_load(const char *intent) {
-	
+int chatbot_is_load(const char* intent) {
+
 	return compare_token(intent, "load") == 0;
-	
+
 }
 
 
@@ -168,25 +168,30 @@ int chatbot_is_load(const char *intent) {
  * Returns:
  *   0 (the chatbot always continues chatting after loading knowledge)
  */
-int chatbot_do_load(int inc, char *inv[], char *response, int n) {
+int chatbot_do_load(int inc, char* inv[], char* response, int n) {
 
-	char* fileName = get_entity(inc, inv);
-	FILE *f = fopen(fileName, "r");
-
-	// Unable to open file
-	if (f == NULL)
-	{
-		snprintf(response, n, "UNABLE TO OPEN FILE");
+	if (inv[1] == NULL) {
+		snprintf(response, n, "Please enter file name to load from.");
 		return 0;
 	}
-	// Reset the current Knowledge Base
-	knowledge_reset(0);
-	knowledge_read(f);
-	fclose(f);
-	free(fileName);
-	snprintf(response, n, "FILE LOADED");
-	return 0;
-	 
+	else {
+		char* fileName = get_entity(inc, inv);
+		FILE* f = fopen(fileName, "r");
+
+		// Unable to open file
+		if (f == NULL)
+		{
+			snprintf(response, n, "UNABLE TO OPEN FILE");
+			return 0;
+		}
+		// Reset the current Knowledge Base
+		knowledge_reset(0);
+		knowledge_read(f);
+		fclose(f);
+		free(fileName);
+		snprintf(response, n, "FILE LOADED");
+		return 0;
+	}
 }
 
 /*
@@ -199,10 +204,10 @@ int chatbot_do_load(int inc, char *inv[], char *response, int n) {
  *  1, if the intent is "what", "where", or "who"
  *  0, otherwise
  */
-int chatbot_is_question(const char *intent) {
-	
+int chatbot_is_question(const char* intent) {
+
 	return compare_token(intent, "what") == 0 || compare_token(intent, "where") == 0 || compare_token(intent, "who") == 0;
-	
+
 }
 
 
@@ -219,33 +224,39 @@ int chatbot_is_question(const char *intent) {
  * Returns:
  *   0 (the chatbot always continues chatting after a question)
  */
-int chatbot_do_question(int inc, char *inv[], char *response, int n) {
-	
-	char* entity = get_entity(inc, inv);
+int chatbot_do_question(int inc, char* inv[], char* response, int n) {
 
-	// If entity not found in knowledge base
-	if (knowledge_get(inv[0], entity, response, n) == KB_NOTFOUND) {
+	if (inc > 1) {
+		char* entity = get_entity(inc, inv);
 
-		//prompt_user
-		char input[MAX_RESPONSE];
-		char* tempAsk[MAX_RESPONSE];
-		strcpy(tempAsk, "I don't know,");
-		for (int i = 0; i < inc; ++i) {
-			strcat(tempAsk, " ");
-			strcat(tempAsk, inv[i]);
-		}
-		strcat(tempAsk, "?");
-		prompt_user(input, n, tempAsk);
+		// If entity not found in knowledge base
+		if (knowledge_get(inv[0], entity, response, n) == KB_NOTFOUND) {
 
-		if (knowledge_put(inv[0], entity, input) == KB_OK) {
-			snprintf(response, n, "OK I'LL REMEMBER THIS!");
+			//prompt_user
+			char input[MAX_RESPONSE];
+			char* tempAsk[MAX_RESPONSE];
+			strcpy(tempAsk, "I don't know,");
+			for (int i = 0; i < inc; ++i) {
+				strcat(tempAsk, " ");
+				strcat(tempAsk, inv[i]);
+			}
+			strcat(tempAsk, "?");
+			prompt_user(input, n, tempAsk);
+
+			if (knowledge_put(inv[0], entity, input) == KB_OK) {
+				snprintf(response, n, "OK I'LL REMEMBER THIS!");
+			}
+			else {
+				snprintf(response, n, "OH NO, SOMETHING WENT WRONG!");
+			}
 		}
-		else {
-			snprintf(response, n, "OH NO, SOMETHING WENT WRONG!");
-		}
+		free(entity);
+		return 0;
 	}
-	free(entity);
-	return 0;
+	else {
+		snprintf(response, n, "I don't understand!");
+		return 0;
+	}
 }
 
 
@@ -259,10 +270,10 @@ int chatbot_do_question(int inc, char *inv[], char *response, int n) {
  *  1, if the intent is "reset"
  *  0, otherwise
  */
-int chatbot_is_reset(const char *intent) {
-	
+int chatbot_is_reset(const char* intent) {
+
 	return compare_token(intent, "reset") == 0;
-	
+
 }
 
 
@@ -275,11 +286,11 @@ int chatbot_is_reset(const char *intent) {
  * Returns:
  *   0 (the chatbot always continues chatting after beign reset)
  */
-int chatbot_do_reset(int inc, char *inv[], char *response, int n) {
+int chatbot_do_reset(int inc, char* inv[], char* response, int n) {
 	knowledge_reset(0);
 	snprintf(response, n, "RESET SUCCESSFUL");
 	return 0;
-	 
+
 }
 
 
@@ -293,10 +304,10 @@ int chatbot_do_reset(int inc, char *inv[], char *response, int n) {
  *  1, if the intent is "save"
  *  0, otherwise
  */
-int chatbot_is_save(const char *intent) {
-	
+int chatbot_is_save(const char* intent) {
+
 	return compare_token(intent, "save") == 0;
-	
+
 }
 
 
@@ -309,8 +320,13 @@ int chatbot_is_save(const char *intent) {
  * Returns:
  *   0 (the chatbot always continues chatting after saving knowledge)
  */
-int chatbot_do_save(int inc, char *inv[], char *response, int n) {
-	
+int chatbot_do_save(int inc, char* inv[], char* response, int n) {
+
+	if (inc == 1) {
+		snprintf(response, n, "I don't understand!");
+		return 0;
+	}
+
 	char* fileName = get_entity(inc, inv);
 
 	for (int i = 0; i < KB_SIZE; ++i) {
@@ -348,10 +364,9 @@ int chatbot_do_save(int inc, char *inv[], char *response, int n) {
 
 	snprintf(response, n, "SAVE SUCCESSFUL");
 	return 0;
-	 
 }
- 
- 
+
+
 /*
  * Determine which an intent is smalltalk.
  *
@@ -363,8 +378,8 @@ int chatbot_do_save(int inc, char *inv[], char *response, int n) {
  *  1, if the intent is the first word of one of the smalltalk phrases
  *  0, otherwise
  */
-int chatbot_is_smalltalk(const char *intent) {
-	
+int chatbot_is_smalltalk(const char* intent) {
+
 	return compare_token(intent, "hi") == 0
 		|| compare_token(intent, "hello") == 0
 		|| compare_token(intent, "halo") == 0
@@ -387,62 +402,70 @@ int chatbot_is_smalltalk(const char *intent) {
  *   0, if the chatbot should continue chatting
  *   1, if the chatbot should stop chatting (e.g. the smalltalk was "goodbye" etc.)
  */
-int chatbot_do_smalltalk(int inc, char *inv[], char *response, int n) {
-	
-	if (compare_token("Hi", inv[0]) == 0)
+int chatbot_do_smalltalk(int inc, char* inv[], char* response, int n) {
+
+	if (compare_token("Hi", inv[0]) == 0) {
 		snprintf(response, n, "Hi there human");
-
+	}
+	else if (compare_token("Hello", inv[0]) == 0) {
+		snprintf(response, n, "Hello there human");
+	}
+	else if (compare_token("Halo", inv[0]) == 0) {
+		snprintf(response, n, "Halo there human");
+	}
 	// I need to build a bot, can you help me with that"
-	else if (compare_token("I", inv[0]) == 0)
+	else if (compare_token("I", inv[0]) == 0) {
 		snprintf(response, n, "Sure, more bot friends for me :)");
-
+	}
 	// so why arent you helping me?
-	else if (compare_token("So", inv[0]) == 0)
+	else if (compare_token("So", inv[0]) == 0) {
 		snprintf(response, n, "you only asked if i can...");
-
-	else if (compare_token("ok", inv[0]) == 0)
+	}
+	else if (compare_token("ok", inv[0]) == 0) {
 		snprintf(response, n, "hahahaha");
-
+	}
 	//nice joke
-	else if (compare_token("nice", inv[0]) == 0)
+	else if (compare_token("nice", inv[0]) == 0) {
 		snprintf(response, n, "Thanks, i know i am funny~ hahaha");
-
-
+	}
+	else {
+		snprintf(response, n, "I don't understand!");
+	}
 	return 0;
 }
 
 
 /*
  * Extracts the entity from the user's input.
- * 
+ *
  * If the second word may be a part of speech that makes sense for the intent.
  *    - for WHAT, WHERE and WHO, it may be "is" or "are".
  *    - for SAVE, it may be "as" or "to".
  *    - for LOAD, it may be "from".
  * The word is otherwise ignored and may be omitted.
- * 
+ *
  * Input:
  * 	inc - word count in input
  * 	inv - array of pointers to each word from user's input
- * 
+ *
  * Returns:
  * 	A pointer to a char containing the entity
  * 	If the intent is a question,
  * 		entity will contain all words after the intent or the second word
  * 	If the intent is SAVE | LOAD,
  * 		entity will contain the first word after the intent or the second word
- * 	
- * 
+ *
+ *
  * E.g. "what is this thing" 	-->	this thing
  * 		"save as that" 			-->	that
  * 		"save as that thing"	--> that
  */
-char *get_entity(int inc, char *inv[])
+char* get_entity(int inc, char* inv[])
 {
 	// Number of words between start of entity and start of input
 	int offset = 1;
-	char *intent = inv[0];
-	char *entity = (char*)malloc(MAX_ENTITY);
+	char* intent = inv[0];
+	char* entity = (char*)malloc(MAX_ENTITY);
 	/* memory not allocated handling */
 	if (entity == NULL) {
 		printf("Memory not allocated.\n");
@@ -485,7 +508,7 @@ char *get_entity(int inc, char *inv[])
 /*
  * Helper function for get_entity()
  * Implementation of Python's join() function
- * 
+ *
  * Input
  *  dest: receiver of the joined string
  *  joiner: containes the string to be inserted between each input string
@@ -493,17 +516,17 @@ char *get_entity(int inc, char *inv[])
  *  numberOfStrings: array size of strings
  * 	offset: number of words between start of entity and start of input
  */
-void strjoin(char *dest, const char *joiner, char *strings[], int numberOfStrings, int offset)
+void strjoin(char* dest, const char* joiner, char* strings[], int numberOfStrings, int offset)
 {
-    // Max length of resultant string
-    // including the terminating null char
-    // Initialised to the first string
-    char buffer[MAX_ENTITY];
-    strcpy(buffer, strings[offset]);
-    for (int i = offset + 1; i < numberOfStrings; ++i)
-    {
-        strcat(buffer, joiner);
-        strcat(buffer, strings[i]);
-    }
-    snprintf(dest, MAX_ENTITY, "%s", buffer);
+	// Max length of resultant string
+	// including the terminating null char
+	// Initialised to the first string
+	char buffer[MAX_ENTITY];
+	strcpy(buffer, strings[offset]);
+	for (int i = offset + 1; i < numberOfStrings; ++i)
+	{
+		strcat(buffer, joiner);
+		strcat(buffer, strings[i]);
+	}
+	snprintf(dest, MAX_ENTITY, "%s", buffer);
 }

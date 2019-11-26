@@ -11,7 +11,7 @@
  *
  * You may add helper functions as necessary.
  */
- 
+
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
@@ -86,30 +86,35 @@ void knowledge_init() {
  *   KB_NOTFOUND, if no response could be found
  *   KB_INVALID, if 'intent' is not a recognised question word
  */
-int knowledge_get(const char *intent, const char *entity, char *response, int n) {
+int knowledge_get(const char* intent, const char* entity, char* response, int n) {
 	if (compare_token(intent, "what") == 0) {
 		int hashIndex = hash_entity(entity);
-		char* tempResponse = GetResponse(WhatKB[hashIndex], entity);	
+		char* tempResponse = GetResponse(WhatKB[hashIndex], entity);
 		if (tempResponse != NULL) {
 			snprintf(response, n, tempResponse);
 			return KB_OK;
-		} else return KB_NOTFOUND;
-	} else if (compare_token(intent, "who") == 0) {
+		}
+		else return KB_NOTFOUND;
+	}
+	else if (compare_token(intent, "who") == 0) {
 		int hashIndex = hash_entity(entity);
 		char* tempResponse = GetResponse(WhoKB[hashIndex], entity);
 		if (tempResponse != NULL) {
 			snprintf(response, n, tempResponse);
 			return KB_OK;
-		} else return KB_NOTFOUND;
-	} else if (compare_token(intent, "where") == 0) {
+		}
+		else return KB_NOTFOUND;
+	}
+	else if (compare_token(intent, "where") == 0) {
 		int hashIndex = hash_entity(entity);
 		char* tempResponse = GetResponse(WhereKB[hashIndex], entity);
 		if (tempResponse != NULL) {
 			snprintf(response, n, tempResponse);
 			return KB_OK;
-		} else return KB_NOTFOUND;
+		}
+		else return KB_NOTFOUND;
 	}
-	
+
 	return KB_INVALID;
 }
 
@@ -129,7 +134,7 @@ int knowledge_get(const char *intent, const char *entity, char *response, int n)
  *   KB_NOMEM, if there was a memory allocation failure
  *   KB_INVALID, if the intent is not a valid question word
  */
-int knowledge_put(const char *intent, const char *entity, const char *response) {
+int knowledge_put(const char* intent, const char* entity, const char* response) {
 
 	if (compare_token(intent, "what") == 0) {
 		// Calculate a index from the entity
@@ -140,7 +145,7 @@ int knowledge_put(const char *intent, const char *entity, const char *response) 
 			strcpy(WhatKB[hashIndex]->response, response);
 		}
 		// Otherwise, append to the end its linked list
-		else 
+		else
 			GetEndKnowledge(WhatKB[hashIndex])->next = CreateKnowledge(entity, response);
 	}
 	else if (compare_token(intent, "who") == 0) {
@@ -168,7 +173,7 @@ int knowledge_put(const char *intent, const char *entity, const char *response) 
 			GetEndKnowledge(WhereKB[hashIndex])->next = CreateKnowledge(entity, response);
 	}
 
-	return KB_OK;	
+	return KB_OK;
 }
 
 
@@ -209,7 +214,7 @@ void ResetLinkedList(KNOWLEDGE_PTR head) {
 	}
 
 	// free memory of subsequent nodes
-	do {	
+	do {
 		free(curr);
 		curr = next;
 		next = next->next;
@@ -276,7 +281,7 @@ void knowledge_reset(int exit) {
  *
  * Returns: the number of entity/response pairs successful read from the file
  */
-void knowledge_read(FILE *f) {
+void knowledge_read(FILE* f) {
 	char section[MAX_SECTION] = "";
 	char line[128]; /* or other suitable maximum line size */
 	while (fgets(line, sizeof(line), f) != NULL) /* read a line */
@@ -289,7 +294,7 @@ void knowledge_read(FILE *f) {
 		//printf("%s", line);
 		start = line;
 		start = lskip(rstrip(start));
-	
+
 		if (*start == '[') {
 			end = find_chars_or_comment(start + 1, "]");
 			if (*end == ']') {
@@ -455,10 +460,15 @@ int knowledge_write(char* pacPath, char* pacSection, char* pacKey, char* pacValu
  */
 KNOWLEDGE_PTR CreateKnowledge(char* entity, char* response) {
 	KNOWLEDGE_PTR tempKnowledge = (KNOWLEDGE_PTR)malloc(sizeof(KNOWLEDGE));
-	strcpy(tempKnowledge->entity, entity);
-	strcpy(tempKnowledge->response, response);
-	tempKnowledge->next = NULL;
-	return tempKnowledge;
+
+	//check whether memory allocation was successful
+	//if successful, return the pointer
+	if (tempKnowledge != NULL) {
+		strcpy(tempKnowledge->entity, entity);
+		strcpy(tempKnowledge->response, response);
+		tempKnowledge->next = NULL;
+		return tempKnowledge;
+	}
 }
 
 /*
@@ -473,14 +483,20 @@ KNOWLEDGE_PTR CreateKnowledge(char* entity, char* response) {
  */
 KNOWLEDGE_PTR BlankKnowledge() {
 	KNOWLEDGE_PTR tempKnowledge = (KNOWLEDGE_PTR)malloc(sizeof(KNOWLEDGE));
-	strcpy(tempKnowledge->entity, "");
-	strcpy(tempKnowledge->response, "");
-	tempKnowledge->next = NULL;
-	return tempKnowledge;
+
+	//check whether memory allocation was successful
+	//if successful, return the pointer
+	if (tempKnowledge != NULL) {
+		strcpy(tempKnowledge->entity, "");
+		strcpy(tempKnowledge->response, "");
+		tempKnowledge->next = NULL;
+		return tempKnowledge;
+	}
+
 }
 
 /*
- * Search for response in a Knowledge Base with matching entity 
+ * Search for response in a Knowledge Base with matching entity
  *
  * Input:
  *   head	   - the start of a linked list of a Knowledge Base
@@ -530,19 +546,25 @@ KNOWLEDGE_PTR GetEndKnowledge(KNOWLEDGE_PTR head) {
 int hash_entity(const char* entity) {
 	int total = 0; // Total value count of each character
 	int it = 0; // While loop iterator
-	
+
 	// For case-insensitive matching
-	char *entity_lower = (char *)malloc(MAX_ENTITY);
-	strncpy(entity_lower, entity, MAX_ENTITY);
-	for (char* it = entity_lower; (*it) != '\0'; ++it)
-	{
-		(*it) = tolower(*it);
+	char* entity_lower = (char*)malloc(MAX_ENTITY);
+
+	//check whether memory allocation was successful
+	//if successful, return the pointer
+	if (entity_lower != NULL) {
+		strncpy(entity_lower, entity, MAX_ENTITY);
+		for (char* it = entity_lower; (*it) != '\0'; ++it)
+		{
+			(*it) = tolower(*it);
+		}
+
+		while (entity_lower[it] != '\0') {
+			total += (int)entity_lower[it] + it + 1; // Add decimal of char and iterator index to total
+			it++; // Increment While loop iterator
+		}
+		free(entity_lower);
+		return total % KB_SIZE; // Return hashed index that fits within range of KB_SIZE 
 	}
 
-	while (entity_lower[it] != '\0') {
-		total += (int)entity_lower[it] + it + 1; // Add decimal of char and iterator index to total
-		it++; // Increment While loop iterator
-	}
-	free(entity_lower);
-	return total % KB_SIZE; // Return hashed index that fits within range of KB_SIZE 
 }
