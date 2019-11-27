@@ -87,12 +87,12 @@ int chatbot_main(int inc, char* inv[], char* response, int n) {
 		snprintf(response, n, "");
 		return 0;
 	}
-
+	
 	/* look for an intent and invoke the corresponding do_* function */
 	if (chatbot_is_exit(inv[0]))
 		return chatbot_do_exit(inc, inv, response, n);
-	else if (chatbot_is_smalltalk(inv[0]))
-		return chatbot_do_smalltalk(inc, inv, response, n);
+	else if (chatbot_do_smalltalk(inc, inv, response, n))
+		return 0;
 	else if (chatbot_is_load(inv[0]))
 		return chatbot_do_load(inc, inv, response, n);
 	else if (chatbot_is_question(inv[0]))
@@ -366,72 +366,43 @@ int chatbot_do_save(int inc, char* inv[], char* response, int n) {
 	return 0;
 }
 
-
 /*
- * Determine which an intent is smalltalk.
- *
+ * Query for smalltalk from .ini file.
  *
  * Input:
- *  intent - the intent
+ *   inc		- amount of words from user input
+ *	 inv[]		- array of words from user input
+ *	 response	- the response for this small talk
+ *	 n			- size of response buffer
  *
  * Returns:
- *  1, if the intent is the first word of one of the smalltalk phrases
- *  0, otherwise
- */
-int chatbot_is_smalltalk(const char* intent) {
-
-	return compare_token(intent, "hi") == 0
-		|| compare_token(intent, "hello") == 0
-		|| compare_token(intent, "halo") == 0
-		|| compare_token(intent, "nice") == 0
-		|| compare_token(intent, "ok") == 0
-		|| compare_token(intent, "I") == 0
-		|| compare_token(intent, "so") == 0;
-
-	return 0;
-}
-
-
-/*
- * Respond to smalltalk.
- *
- * See the comment at the top of the file for a description of how this
- * function is used.
- *
- * Returns:
- *   0, if the chatbot should continue chatting
- *   1, if the chatbot should stop chatting (e.g. the smalltalk was "goodbye" etc.)
+ *   0, if the query result failed
+ *   1, otherwise
  */
 int chatbot_do_smalltalk(int inc, char* inv[], char* response, int n) {
-
-	if (compare_token("Hi", inv[0]) == 0) {
-		snprintf(response, n, "Hi there human");
+	// Combine user input into a sentence
+	char temp[MAX_INPUT] = "\0";
+	for (int i = 0; i < inc; ++i) {
+		// Lowercase every words
+		for (int j = 0; j < strlen(inv[i]); ++j)
+			inv[i][j] = tolower(inv[i][j]);
+		// Join words into sentence
+		strcat(temp, inv[i]);
+		if (i != inc - 1)
+			strcat(temp, " ");
 	}
-	else if (compare_token("Hello", inv[0]) == 0) {
-		snprintf(response, n, "Hello there human");
-	}
-	else if (compare_token("Halo", inv[0]) == 0) {
-		snprintf(response, n, "Halo there human");
-	}
-	// I need to build a bot, can you help me with that"
-	else if (compare_token("I", inv[0]) == 0) {
-		snprintf(response, n, "Sure, more bot friends for me :)");
-	}
-	// so why arent you helping me?
-	else if (compare_token("So", inv[0]) == 0) {
-		snprintf(response, n, "you only asked if i can...");
-	}
-	else if (compare_token("ok", inv[0]) == 0) {
-		snprintf(response, n, "hahahaha");
-	}
-	//nice joke
-	else if (compare_token("nice", inv[0]) == 0) {
-		snprintf(response, n, "Thanks, i know i am funny~ hahaha");
-	}
-	else {
-		snprintf(response, n, "I don't understand!");
-	}
-	return 0;
+	char result[255];
+	// Set the directory of the file to query from
+	GetCurrentDirectory(255, result);
+	strcat(result, "/smalltalk.ini");
+	// Query sentence from .ini file
+	GetPrivateProfileString("smalltalk", temp, NULL, result, 255, result);
+	// if no result is found
+	if (strlen(result) == 0)
+		return 0;
+	// Return the response from the query
+	snprintf(response, n, result);
+	return 1;
 }
 
 

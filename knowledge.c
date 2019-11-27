@@ -199,26 +199,18 @@ void ResetLinkedList(KNOWLEDGE_PTR head) {
 	KNOWLEDGE_PTR curr = head;
 	KNOWLEDGE_PTR next = curr->next;
 
+	// keep memory of head, only reinitialize head
+	ResetNode(curr);
 	// if only head exist
-	if (next == NULL) {
-		// re-initialize head and return
-		ResetNode(curr);
+	if (next == NULL)
 		return;
-	}
-	else {
-		// keep memory of head, only reinitialize head
-		ResetNode(curr);
-		// move on to the next node
-		curr = next;
-		next = next->next;
-	}
 
 	// free memory of subsequent nodes
 	do {
-		free(curr);
 		curr = next;
 		next = next->next;
-	} while (curr != NULL);
+		free(curr);
+	} while (next != NULL);
 }
 
 /*
@@ -231,19 +223,18 @@ void FreeLinkedList(KNOWLEDGE_PTR head) {
 	KNOWLEDGE_PTR curr = head;
 	KNOWLEDGE_PTR next = curr->next;
 
+	// free head memory
+	free(curr);
 	// if only head exist
-	if (next == NULL) {
-		// free head memory
-		free(curr);
+	if (next == NULL)
 		return;
-	}
 
 	// free memory of subsequent nodes
 	do {
-		free(curr);
 		curr = next;
 		next = next->next;
-	} while (curr != NULL);
+		free(curr);
+	} while (next != NULL);
 }
 
 
@@ -283,7 +274,7 @@ void knowledge_reset(int exit) {
  */
 void knowledge_read(FILE* f) {
 	char section[MAX_SECTION] = "";
-	char line[128]; /* or other suitable maximum line size */
+	char line[MAX_ENTITY + MAX_RESPONSE + 1]; /* or other suitable maximum line size */
 	while (fgets(line, sizeof(line), f) != NULL) /* read a line */
 	{
 		char* start;
@@ -492,7 +483,6 @@ KNOWLEDGE_PTR BlankKnowledge() {
 		tempKnowledge->next = NULL;
 		return tempKnowledge;
 	}
-
 }
 
 /*

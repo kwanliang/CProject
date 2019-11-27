@@ -30,11 +30,10 @@ int main(int argc, char* argv[]) {
 	/* initialise the chatbot */
 	inv[0] = "reset";
 	inv[1] = NULL;
+	knowledge_init();
 
 	/* print a welcome message */
 	printf("%s: Hello, I'm %s.\n", chatbot_botname(), chatbot_botname());
-
-	knowledge_init();
 
 	/* main command loop */
 	do {
