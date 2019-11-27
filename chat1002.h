@@ -29,6 +29,8 @@ int chatbot_is_reset(const char *intent);
 int chatbot_do_reset(int inc, char *inv[], char *response, int n);
 int chatbot_is_save(const char *intent);
 int chatbot_do_save(int inc, char *inv[], char *response, int n);
+int chatbot_is_play(const char* intent);
+int chatbot_do_play(int inc, char* inv[], char* response, int n);
 int chatbot_is_smalltalk(const char *intent);
 int chatbot_do_smalltalk(int inc, char *inv[], char *resonse, int n);
 char *get_entity(int inc, char *inv[]);

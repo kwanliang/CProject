@@ -44,6 +44,7 @@
 #include <string.h>
 #include <stdlib.h>
 #include "chat1002.h"
+#include <time.h>
 
 
  /*
@@ -101,6 +102,8 @@ int chatbot_main(int inc, char* inv[], char* response, int n) {
 		return chatbot_do_reset(inc, inv, response, n);
 	else if (chatbot_is_save(inv[0]))
 		return chatbot_do_save(inc, inv, response, n);
+	else if (chatbot_is_play(inv[0]))
+		return chatbot_do_play(inc, inv, response, n);
 	else {
 		snprintf(response, n, "I don't understand \"%s\".", inv[0]);
 		return 0;
@@ -366,6 +369,111 @@ int chatbot_do_save(int inc, char* inv[], char* response, int n) {
 	return 0;
 }
 
+int chatbot_is_play(const char* intent) {
+
+	return compare_token(intent, "play") == 0;
+
+}
+
+int chatbot_do_play(int inc, char* inv[], char* response, int n) {
+
+	char choice[5];
+
+	int R = 1;
+	int P = 2;
+	int S = 3;
+	int i;
+	int Pscore = 0;
+	int Cscore = 0;
+	srand(time(NULL));
+	printf("\n");
+	printf("*** ROCK PAPER SCISSORS ***\n");
+	printf("-----best of 5 rounds-----\n");
+	printf("\n");
+	printf("Rock = 1\nPaper = 2\nScissors = 3\n");
+	printf("\n");
+
+	for (i = 0; i < 5; i++) {
+		printf("Enter your choice: ");
+		fgets(choice, 5, stdin);
+
+		int computer = rand() % 3 + 1;
+
+		if (choice[0] == '1') {
+			if (computer == 1) {
+				printf("Computer chose rock. (1)\n");
+				printf("Draw!\n");
+				printf("\n");
+			}
+			if (computer == 2) {
+				printf("Computer chose paper. (2)\n");
+				printf("Computer Wins!\n");
+				Cscore = Cscore + 1;
+				printf("\n");
+			}
+			if (computer == 3) {
+				printf("Computer chose scissors. (3)\n");
+				printf("Player Wins!\n");
+				Pscore = Pscore + 1;
+				printf("\n");
+			}
+		}
+		else if (choice[0] == '2') {
+			if (computer == 2) {
+				printf("Computer chose paper. (2)\n");
+				printf("Draw!\n");
+				printf("\n");
+			}
+			if (computer == 3) {
+				printf("Computer chose scissors. (3)\n");
+				printf("Computer Wins!\n");
+				Cscore = Cscore + 1;
+				printf("\n");
+			}
+			if (computer == 1) {
+				printf("Computer chose rock. (1)\n");
+				printf("Player Wins!\n");
+				Pscore = Pscore + 1;
+				printf("\n");
+			}
+		}
+		else if (choice[0] == '3') {
+			if (computer == 3) {
+				printf("Computer chose scissors. (3)\n");
+				printf("Draw!\n");
+				printf("\n");
+			}
+			if (computer == 2) {
+				printf("Computer chose paper. (2)\n");
+				printf("Player Wins!\n");
+				Pscore = Pscore + 1;
+				printf("\n");
+			}
+			if (computer == 1) {
+				printf("Computer chose rock.(1)\n");
+				printf("Computer Wins!\n");
+				Cscore = Cscore + 1;
+				printf("\n");
+			}
+		}
+		else {
+			printf("Wrong Answer! Please enter 1 / 2 / 3!\n");
+		}
+
+	}
+	if (Cscore > Pscore) {
+		snprintf(response, n, "Computer wins %d to %d!\n", Cscore, Pscore);
+	}
+	else if (Cscore < Pscore) {
+		snprintf(response, n, "Player wins %d to %d!\n", Pscore, Cscore);
+	}
+	else if (Cscore = Pscore) {
+		snprintf(response, n, "No winner it is a draw!\n");
+	}
+
+
+	return 0;
+}
 
 /*
  * Determine which an intent is smalltalk.
