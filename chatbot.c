@@ -43,8 +43,9 @@
 #include <stdio.h>
 #include <string.h>
 #include <stdlib.h>
-#include "chat1002.h"
 #include <time.h>
+#include <Windows.h>
+#include "chat1002.h"
 
 
  /*
